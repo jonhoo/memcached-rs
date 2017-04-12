@@ -10,7 +10,7 @@
 use std::io::{BufRead, Cursor, BufReader, Write};
 use std::string::String;
 use std::str;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::convert::From;
 use std::error;
 use std::fmt;
@@ -684,7 +684,7 @@ impl<T: BufRead + Write + Send> MultiOperation for BinaryProto<T> {
         }
     }
 
-    fn get_multi(&mut self, keys: &[&[u8]]) -> MemCachedResult<BTreeMap<Vec<u8>, (Vec<u8>, u32)>> {
+    fn get_multi(&mut self, keys: &[&[u8]]) -> MemCachedResult<HashMap<Vec<u8>, (Vec<u8>, u32)>> {
 
         for key in keys.iter() {
             let req_header = RequestHeader::from_payload(Command::GetKeyQuietly, DataType::RawBytes, 0, 0, 0,
@@ -699,7 +699,7 @@ impl<T: BufRead + Write + Send> MultiOperation for BinaryProto<T> {
         }
         try!(self.send_noop());
 
-        let mut result = BTreeMap::new();
+        let mut result = HashMap::with_capacity(keys.len());
         loop {
             let resp = try!(ResponsePacket::read_from(&mut self.stream));
             match resp.header.status {
@@ -1316,7 +1316,7 @@ impl<T: BufRead + Write + Send> AuthOperation for BinaryProto<T> {
 #[cfg(test)]
 mod test {
     use std::net::TcpStream;
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, HashMap};
     use proto::{Operation, MultiOperation, ServerOperation, NoReplyOperation,
                 CasOperation, BinaryProto};
 
